@@ -20,10 +20,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_groq import ChatGroq
 from pydantic import Field
 
-
-# ============================================================
 # STREAMLIT CONFIG
-# ============================================================
+
 
 st.set_page_config(
     page_title="Zyro Dynamics HR Help Desk",
@@ -34,18 +32,14 @@ st.title("💼 Zyro Dynamics HR Help Desk")
 st.caption("Ask questions about Zyro Dynamics HR policies.")
 
 
-# ============================================================
 # CONFIGURATION
-# ============================================================
 
 CORPUS_DIR = "hr_corpus"
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 TOP_K = 3
 
 
-# ============================================================
 # LOAD PDF DOCUMENTS
-# ============================================================
 
 @st.cache_resource
 def build_rag_system():
@@ -77,9 +71,7 @@ def build_rag_system():
                 )
 
 
-    # ========================================================
     # CHUNKING
-    # ========================================================
 
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
@@ -89,9 +81,7 @@ def build_rag_system():
     chunks = text_splitter.split_documents(documents)
 
 
-    # ========================================================
     # EMBEDDINGS
-    # ========================================================
 
     embed_model = SentenceTransformer(
         EMBEDDING_MODEL
@@ -103,9 +93,7 @@ def build_rag_system():
     ).astype("float32")
 
 
-    # ========================================================
     # FAISS
-    # ========================================================
 
     dimension = embeddings.shape[1]
 
@@ -114,9 +102,7 @@ def build_rag_system():
     index.add(embeddings)
 
 
-    # ========================================================
     # RETRIEVER
-    # ========================================================
 
     class FAISSRetriever(BaseRetriever):
 
@@ -155,22 +141,18 @@ def build_rag_system():
     )
 
 
-    # ========================================================
     # GROQ LLM
-    # ========================================================
 
     groq_api_key = st.secrets["GROQ_API_KEY"]
 
     llm = ChatGroq(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-20b",
         api_key=groq_api_key,
         temperature=0
     )
 
 
-    # ========================================================
     # SCOPE CLASSIFIER
-    # ========================================================
 
     scope_prompt = ChatPromptTemplate.from_template("""
 You are a scope classifier for the Zyro Dynamics Pvt. Ltd. HR Help Desk.
@@ -208,9 +190,7 @@ OUT_OF_SCOPE
     scope_chain = scope_prompt | llm
 
 
-    # ========================================================
     # GROUNDING PROMPT
-    # ========================================================
 
     prompt = ChatPromptTemplate.from_template("""
 You are an HR Help Desk assistant for Zyro Dynamics Pvt. Ltd.
@@ -251,9 +231,7 @@ Answer:
 """)
 
 
-    # ========================================================
     # FORMAT RETRIEVED DOCUMENTS
-    # ========================================================
 
     def format_docs(docs):
 
@@ -263,9 +241,7 @@ Answer:
         )
 
 
-    # ========================================================
     # LCEL RAG CHAIN
-    # ========================================================
 
     rag_chain = (
         RunnableParallel(
@@ -287,9 +263,7 @@ Answer:
     )
 
 
-    # ========================================================
     # FINAL ASK_BOT FUNCTION
-    # ========================================================
 
     def ask_bot(question):
 
@@ -352,9 +326,7 @@ Answer:
     return ask_bot, len(pdf_files), len(chunks)
 
 
-# ============================================================
 # INITIALIZE SYSTEM
-# ============================================================
 
 try:
 
@@ -376,9 +348,7 @@ except Exception as e:
     st.stop()
 
 
-# ============================================================
 # CHAT INTERFACE
-# ============================================================
 
 question = st.chat_input(
     "Ask an HR policy question..."
